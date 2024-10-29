@@ -85,7 +85,7 @@ class Bird(pg.sprite.Sprite):
         self.dire = (+1, 0)
         self.image = self.imgs[self.dire]
         self.rect = self.image.get_rect()
-        self.rect.center = xy
+        self.rect.center = (100,HEIGHT/2)
         self.speed = 10
         self.state = "normal"  # 状態変数: "normal" or "hyper"
         self.hyper_life = 0  # 無敵状態の残りフレーム数
@@ -272,9 +272,9 @@ class Enemy(pg.sprite.Sprite):
         super().__init__()
         self.image = random.choice(__class__.imgs)
         self.rect = self.image.get_rect()
-        self.rect.center = random.randint(0, WIDTH), 0
+        self.rect.center = 900, 0
         self.vx, self.vy = 0, +6
-        self.bound = random.randint(50, HEIGHT//2)  # 停止位置
+        self.bound = WIDTH/2  # 停止位置
         self.state = "down"  # 降下状態or停止状態
         self.interval = random.randint(50, 300)  # 爆弾投下インターバル
 
@@ -284,10 +284,27 @@ class Enemy(pg.sprite.Sprite):
         ランダムに決めた停止位置_boundまで降下したら，_stateを停止状態に変更する
         引数 screen：画面Surface
         """
-        if self.rect.centery > self.bound:
-            self.vy = 0
-            self.state = "stop"
-        self.rect.move_ip(self.vx, self.vy)
+        if self.state == "down":
+            if self.rect.centery >= self.bound:
+                self.vy = random.choice([-3,3])
+                self.state = "move"
+            else:
+                self.rect.move_ip(self.vx, self.vy)
+        elif self.state == "move":
+            self.rect.move_ip(self.vx,self.vy)
+
+            if self.rect.left <= 0 or self.rect.right >= WIDTH:
+                self.vx *= -1
+            if self.rect.top <= 0 or self.rect.bottom >= HEIGHT:
+                self.vy *= -1
+
+
+# class HP:
+#     """
+#     コウカトンとボスのHPを計算、表示させるクラス
+#     """
+
+
 
 
 # class Score:
@@ -419,7 +436,7 @@ def main():
             emys.add(Enemy())
 
         for emy in emys:
-            if emy.state == "stop" and tmr%emy.interval == 0:
+            if tmr%emy.interval == 0:
                 # 敵機が停止状態に入ったら，intervalに応じて爆弾投下
                 bombs.add(Bomb(emy, bird))
 
