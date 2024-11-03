@@ -89,9 +89,9 @@ class Bird(pg.sprite.Sprite):
         self.speed = 10
         self.state = "normal"  # 状態変数: "normal" or "hyper"
         self.hyper_life = 0  # 無敵状態の残りフレーム数
-        self.hp =1000
-        self.h_rect = 200, HEIGHT-50
-        self.h_name = "コウカトン" 
+        self.hp =1000                    #自キャラの総HP
+        self.h_rect = 200, HEIGHT-50     #HP表示される座標
+        self.h_name = "You"        #自キャラの名前表記
 
     def change_img(self, num: int, screen: pg.Surface):
         """
@@ -280,9 +280,9 @@ class Enemy(pg.sprite.Sprite):
         self.bound = WIDTH/2  # 停止位置
         self.state = "down"  # 降下状態or停止状態
         self.interval = random.randint(50, 300)  # 爆弾投下インターバル
-        self.hp = 1200
-        self.h_rect = 200, 50
-        self.h_name = "BOSS"
+        self.hp = 1200               #相手の総HP
+        self.h_rect = 200, 50        #相手のHP表記の座標
+        self.h_name = "BOSS"         #相手の名前表記
 
     def update(self):
         """
@@ -413,8 +413,8 @@ def main():
     bg_img = pg.image.load(f"fig/pg_bg.jpg")
 
 
-    beam_f_or_t=False
-    gravity_f_or_t=False
+    beam_f_or_t=False     #beamで攻撃した時のtrue_false判定
+    gravity_f_or_t=False  #gravityで攻撃した時のtrue_false判定
 
 
     bird = Bird(3, (900, 400))
@@ -465,10 +465,10 @@ def main():
 
 
         for emy in pg.sprite.groupcollide(emys, beams, beam_f_or_t, True).keys():
-            enemy_hp.value -=100
-            if 0 <= enemy_hp.value <=100:
+            enemy_hp.value -=100    #攻撃を自キャラが相手に行ったらHPを100減らす
+            if 0 <= enemy_hp.value <=100: #beamで残り攻撃回数1回で相手を倒せるHP残量になったらbeam_f_or_t=Trueにする
                 beam_f_or_t=True
-                if enemy_hp.value <=0:           
+                if enemy_hp.value <=0:  #相手のHPがゼロになったら演出を行う
                     exps.add(Explosion(emy, 100))  # 爆発エフェクト
                     bird.change_img(6, screen)  # こうかとん喜びエフェクト
 
@@ -480,10 +480,10 @@ def main():
                 exps.add(Explosion(bomb, 50)) # 爆発エフェクト
 
         for emy in pg.sprite.groupcollide(emys, gravity, gravity_f_or_t, False):
-            enemy_hp.value -=1
-            if 0 <= enemy_hp.value <=1:
+            enemy_hp.value -=1   #攻撃を自キャラが相手に行ったらHPを1減らす
+            if 0 <= enemy_hp.value <=1: #gravityで残り攻撃回数1回で相手を倒せるHP残量になったらgravity_f_or_t=Trueにする
                 gravity_f_or_t=True
-                if enemy_hp.value <=0:          
+                if enemy_hp.value <=0:  #相手のHPがゼロになったら演出を行う
                     exps.add(Explosion(emy, 100))  # 爆発エフェクト
                     bird.change_img(6, screen)  # こうかとん喜びエフェクト
 
@@ -493,8 +493,8 @@ def main():
         # こうかとんと爆弾の衝突判定
         if len(pg.sprite.spritecollide(bird, bombs, True)) != 0:
             if bird.state != "hyper":  # 無敵状態でない場合
-                bird_hp.value -=100
-                if bird_hp.value <=0:
+                bird_hp.value -=100 #相手から攻撃を受けたら自キャラのHPを100減らす
+                if bird_hp.value <=0:  #HPが0になったら演出
                     bird.change_img(8, screen)  # こうかとん悲しみエフェクト
                     pg.display.update()
                     time.sleep(2)
