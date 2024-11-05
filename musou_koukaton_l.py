@@ -333,18 +333,21 @@ class MP:
     """
     def __init__(self):
         self.mp = 300 #mpの初期値
-        self.font = pg.font.Font(None, 50)
+        self.font = pg.font.Font(None,25)
         self.color = (0, 0, 255)
         self.image = self.font.render(f"MP: {self.mp}", 0, self.color)
         self.rect = self.image.get_rect()
-        self.rect.center = 100, 575
+        self.rect.center = 0,0
         
     def update(self,tmr,screen: pg.Surface):
         #mpの自然回復
-        if self.mp < 300 and tmr%10 == 0: #mpの最大値未満の時、5フレームごとにmpを+1
-            self.mp += 2
+        if self.mp < 300 and tmr%5 == 0: #mpの最大値未満の時、5フレームごとにmpを+1
+            self.mp += 1
         
         #MP残量表示
+        self.image = pg.Surface((300,10))
+        self.rect = self.image.get_rect()
+        self.rect.center = 250,575
         self.image = self.font.render(f"MP: {self.mp}", 0, self.color)
         screen.blit(self.image, self.rect)
         
@@ -466,7 +469,7 @@ def main():
             if event.type  == pg.KEYDOWN and event.key == pg.K_0:
                 #if score.value > 200:
                 if mp.mp > 50:
-                    gravity.add(Gravity(400))
+                    gravity.add(Gravity(50))
                     mp.mp -= 50
                 #    score.value -= 200
                     
