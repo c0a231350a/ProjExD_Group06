@@ -1,4 +1,5 @@
-# 弾幕王コウカトン（仮）
+# 弾幕王コウカトン
+![title](fig/koukaton_pinti.png)
 
 ## 実行環境の必要条件
 * python >= 3.10
