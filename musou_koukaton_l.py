@@ -147,7 +147,7 @@ class Bomb(pg.sprite.Sprite):
     """
     爆弾に関するクラス
     """
-    colors = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 0), (255, 0, 255), (0, 255, 255)]
+    color = (255, 0, 0)
 
     def __init__(self, emy: "Enemy", bird: Bird):
         """
@@ -156,9 +156,9 @@ class Bomb(pg.sprite.Sprite):
         引数2 bird：攻撃対象のこうかとん
         """
         super().__init__()
-        rad = random.randint(10, 50)  # 爆弾円の半径：10以上50以下の乱数
+        rad = 20  
         self.image = pg.Surface((2*rad, 2*rad))
-        color = random.choice(__class__.colors)  # 爆弾円の色：クラス変数からランダム選択
+        color = (255,0,0)
         pg.draw.circle(self.image, color, (rad, rad), rad)
         self.image.set_colorkey((0, 0, 0))
         self.rect = self.image.get_rect()
@@ -177,6 +177,41 @@ class Bomb(pg.sprite.Sprite):
         if check_bound(self.rect) != (True, True):
             self.kill()
 
+class NeoBomb(pg.sprite.Sprite):
+    """
+    爆弾に関するクラス
+    """
+    color = (255, 0, 0)
+
+    def __init__(self, emy: "Enemy", bird: Bird, vx, vy):
+        """
+        爆弾円Surfaceを生成する
+        引数1 emy：爆弾を投下する敵機
+        引数2 bird：攻撃対象のこうかとん
+        """
+        super().__init__()
+        rad = 20  
+        self.image = pg.Surface((2*rad, 2*rad))
+        color = (255,0,0)
+        pg.draw.circle(self.image, color, (rad, rad), rad)
+        self.image.set_colorkey((0, 0, 0))
+        self.vx = vx
+        self.vy = vy
+        self.rect = self.image.get_rect()
+        # 爆弾を投下するemyから見た攻撃対象のbirdの方向を計算
+        self.vx, self.vy = calc_orientation(emy.rect, bird.rect)  
+        self.rect.centerx = emy.rect.centerx
+        self.rect.centery = emy.rect.centery+emy.rect.height//2
+        self.speed = 6
+
+    def update(self):
+        """
+        爆弾を速度ベクトルself.vx, self.vyに基づき移動させる
+        引数 screen：画面Surface
+        """
+        self.rect.move_ip(self.speed*self.vx, self.speed*self.vy)
+        if check_bound(self.rect) != (True, True):
+            self.kill()
 
 class Beam(pg.sprite.Sprite):
     """
@@ -222,9 +257,6 @@ class NeoBeam(pg.sprite.Sprite):
         戻り値: Beamオブジェクトのリスト
         """
         beams = []
-        # arange = (-50, 51)
-        # step = (arange[1] - arange[0]) // self.num
-        # beams = range(-50, +50, step)
 
         angle_range = (-50, 51)
         angle_step = (angle_range[1] - angle_range[0]) // self.num  
@@ -438,7 +470,15 @@ def main():
         for emy in emys:
             if tmr%emy.interval == 0:
                 # 敵機が停止状態に入ったら，intervalに応じて爆弾投下
-                bombs.add(Bomb(emy, bird))
+                num = 5
+                angles = [i - num//2 for i in range(num)]
+                angle_step = 90/num
+                vx, vy = calc_orientation(emy.rect, bird.rect)
+                angle = math.degrees(math.atan2(-vy, vx))
+                for i in range(5):
+                    vx = math.cos(math.radians(angle + angles[i] * angle_step))
+                    vy = -math.sin(math.radians(angle + angles[i] * angle_step))
+                    bombs.add(NeoBomb(emy, bird, vx, vy))
 
         for emy in pg.sprite.groupcollide(emys, beams, True, True).keys():
             exps.add(Explosion(emy, 100))  # 爆発エフェクト
