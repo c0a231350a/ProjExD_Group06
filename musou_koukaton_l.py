@@ -314,24 +314,6 @@ class HP(pg.sprite.Sprite):
         self.image = self.font.render(f"{self.a_name} HP: {self.value}", 0, self.color)
         screen.blit(self.image, self.rect)
 
-# class Score:
-#     """
-#     打ち落とした爆弾，敵機の数をスコアとして表示するクラス
-#     爆弾：1点
-#     敵機：10点
-#     """
-#     def __init__(self):
-#         self.font = pg.font.Font(None, 50)
-#         self.color = (0, 0, 255)
-#         self.value = 0
-#         self.image = self.font.render(f"Score: {self.value}", 0, self.color)
-#         self.rect = self.image.get_rect()
-#         self.rect.center = 100, HEIGHT-50
-
-#     def update(self, screen: pg.Surface):
-#         self.image = self.font.render(f"Score: {self.value}", 0, self.color)
-#         screen.blit(self.image, self.rect)
-
 class MP:
     """
     mpの初期値を設定する
@@ -433,7 +415,6 @@ def main():
     gravity_f_or_t=False  #gravityで攻撃した時のtrue_false判定
 
     mp = MP()
-    #score = Score()
     state = "inactive"
 
     bird = Bird(3, (900, 400))
@@ -486,10 +467,10 @@ def main():
             if tmr == 200:  # 200フレームに1回，敵機を出現させる
                 emys.add(Enemy())
 
-            if tmr == 400:  # 200フレームに1回，敵機を出現させる
+            if tmr == 400:  # 400フレームに1回，敵機を出現させる
                 emys.add(Enemy())
 
-            if tmr == 400:  # 200フレームに1回，敵機を出現させる
+            if tmr == 600:  # 600フレームに1回，敵機を出現させる
                 emys.add(Enemy())
 
             for emy in emys:
@@ -516,6 +497,14 @@ def main():
                             emy.kill()
                             exps.add(Explosion(emy, 100))  # 爆発エフェクト
                         bird.change_img(6, screen)  # こうかとん喜びエフェクト
+                        fonto = pg.font.Font(None, 80) 
+                        txt = fonto.render("Game Clear!!", True, (255, 0, 0))
+                        txt_rect = txt.get_rect()
+                        screen.blit(txt, [(WIDTH-txt_rect.width)/2, (HEIGHT-txt_rect.height)/2])
+                        pg.display.update()
+                        time.sleep(5)
+                        return
+
 
 
             for bomb in pg.sprite.groupcollide(bombs, beams, True, True).keys():
@@ -535,6 +524,13 @@ def main():
                             emy.kill()
                             exps.add(Explosion(emy, 100))  # 爆発エフェクト
                         bird.change_img(6, screen)  # こうかとん喜びエフェクト
+                        fonto = pg.font.Font(None, 80) 
+                        txt = fonto.render("Game Clear!!", True, (255, 0, 0))
+                        txt_rect = txt.get_rect()
+                        screen.blit(txt, [(WIDTH-txt_rect.width)/2, (HEIGHT-txt_rect.height)/2])
+                        pg.display.update()
+                        time.sleep(5)
+                        return
 
                 for bomb in pg.sprite.groupcollide(bombs, gravity, True, False):
                     exps.add(Explosion(bomb, 50))
