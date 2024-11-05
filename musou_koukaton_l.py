@@ -90,7 +90,7 @@ class Bird(pg.sprite.Sprite):
         self.state = "normal"  # 状態変数: "normal" or "hyper"
         self.hyper_life = 0  # 無敵状態の残りフレーム数
         self.hp =1000                    #自キャラの総HP
-        self.h_rect = 200, HEIGHT-50     #HP表示される座標
+        self.h_rect = 500, HEIGHT-50     #HP表示される座標
         self.h_name = "You"        #自キャラの名前表記
 
     def change_img(self, num: int, screen: pg.Surface):
@@ -269,18 +269,18 @@ class Enemy(pg.sprite.Sprite):
     """
     敵機に関するクラス
     """
-    imgs = [pg.image.load(f"fig/alien{i}.png") for i in range(1, 4)]
+    imgs = pg.image.load(f"fig/alien100.png")
     
     def __init__(self):
         super().__init__()
-        self.image = random.choice(__class__.imgs)
+        self.image = __class__.imgs
         self.rect = self.image.get_rect()
         self.rect.center = 900, 0
         self.vx, self.vy = 0, +6
         self.bound = WIDTH/2  # 停止位置
         self.state = "down"  # 降下状態or停止状態
         self.interval = random.randint(50, 300)  # 爆弾投下インターバル
-        self.hp = 1200               #相手の総HP
+        self.hp = 5000               #相手の総HP
         self.h_rect = 200, 50        #相手のHP表記の座標
         self.h_name = "BOSS"         #相手の名前表記
 
@@ -448,7 +448,7 @@ def main():
                 EMP(emys,bombs,screen)
 
             if event.type  == pg.KEYDOWN and event.key == pg.K_0:
-                gravity.add(Gravity(400))
+                gravity.add(Gravity(50))
                     
             if event.type == pg.KEYDOWN and event.key == pg.K_TAB and len(shields) == 0 :
 
@@ -456,6 +456,9 @@ def main():
         screen.blit(bg_img, [0, 0])   
 
         if tmr == 200:  # 200フレームに1回，敵機を出現させる
+            emys.add(Enemy())
+
+        if tmr == 400:  # 200フレームに1回，敵機を出現させる
             emys.add(Enemy())
 
         for emy in emys:
@@ -466,10 +469,14 @@ def main():
 
         for emy in pg.sprite.groupcollide(emys, beams, beam_f_or_t, True).keys():
             enemy_hp.value -=100    #攻撃を自キャラが相手に行ったらHPを100減らす
+            if enemy_hp.value < 0:
+                enemy_hp.value=0
             if 0 <= enemy_hp.value <=100: #beamで残り攻撃回数1回で相手を倒せるHP残量になったらbeam_f_or_t=Trueにする
-                beam_f_or_t=True
+                # beam_f_or_t=True
                 if enemy_hp.value <=0:  #相手のHPがゼロになったら演出を行う
-                    exps.add(Explosion(emy, 100))  # 爆発エフェクト
+                    for emy in emys:
+                        emy.kill()
+                        exps.add(Explosion(emy, 100))  # 爆発エフェクト
                     bird.change_img(6, screen)  # こうかとん喜びエフェクト
 
 
@@ -481,10 +488,14 @@ def main():
 
         for emy in pg.sprite.groupcollide(emys, gravity, gravity_f_or_t, False):
             enemy_hp.value -=1   #攻撃を自キャラが相手に行ったらHPを1減らす
+            if enemy_hp.value < 0:
+                enemy_hp.value=0
             if 0 <= enemy_hp.value <=1: #gravityで残り攻撃回数1回で相手を倒せるHP残量になったらgravity_f_or_t=Trueにする
-                gravity_f_or_t=True
+                # gravity_f_or_t=True
                 if enemy_hp.value <=0:  #相手のHPがゼロになったら演出を行う
-                    exps.add(Explosion(emy, 100))  # 爆発エフェクト
+                    for emy in emys:
+                        emy.kill()
+                        exps.add(Explosion(emy, 100))  # 爆発エフェクト
                     bird.change_img(6, screen)  # こうかとん喜びエフェクト
 
         for bomb in pg.sprite.groupcollide(bombs, gravity, True, False):
