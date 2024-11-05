@@ -1,3 +1,7 @@
+"""
+ボスの攻撃を画面買いに出ないようにするための反射
+＋機能として反射するたびに攻撃玉のサイズをランダムで変更
+"""
 import math
 import os
 import random
@@ -105,9 +109,6 @@ class Bird(pg.sprite.Sprite):
     def update(self, key_lst: list[bool], screen: pg.Surface):
         """
         押下キーに応じてこうかとんを移動させる
-        引数1 key_lst：押下キーの真理値リスト
-        引数2 screen：画面Surface
-        引数3 score：スコアオブジェクト
         """
         
         # 左SHIFTが押されていたら速度を20に設定
@@ -132,7 +133,6 @@ class Bird(pg.sprite.Sprite):
         if key_lst[pg.K_RSHIFT]  and self.state == "normal" and MP.mp > 200:  # 発動条件：mpが200より大 and score.value >= 100
             self.state = "hyper"
             self.hyper_life = 500  # 発動時間：500フレーム
-            # score.value -= 100  # 消費スコア：100
             self.image = pg.transform.laplacian(self.image)  # 画像を変換
 
         # 無敵状態の持続
@@ -151,7 +151,7 @@ class Bomb(pg.sprite.Sprite):
     """
     爆弾に関するクラス
     """
-    colors = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 0), (255, 0, 255), (0, 255, 255)]
+    colors = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 0), (255, 0, 255), (0, 255, 255), (255, 255, 255), (0, 0, 0)]
 
     def __init__(self, emy: "Enemy", bird: Bird):
         """
@@ -160,7 +160,7 @@ class Bomb(pg.sprite.Sprite):
         引数2 bird：攻撃対象のこうかとん
         """
         super().__init__()
-        rad = random.randint(10, 50)  # 爆弾円の半径：10以上50以下の乱数
+        rad = random.randint(30, 50)  # 爆弾円の半径：10以上50以下の乱数
         self.image = pg.Surface((2*rad, 2*rad))
         color = random.choice(__class__.colors)  # 爆弾円の色：クラス変数からランダム選択
         pg.draw.circle(self.image, color, (rad, rad), rad)
@@ -170,16 +170,37 @@ class Bomb(pg.sprite.Sprite):
         self.vx, self.vy = calc_orientation(emy.rect, bird.rect)  
         self.rect.centerx = emy.rect.centerx
         self.rect.centery = emy.rect.centery+emy.rect.height//2
-        self.speed = 6
+        self.speed = 10  #球速10
+        self.bounce_count = 0  # 反射回数をカウント
 
     def update(self):
         """
         爆弾を速度ベクトルself.vx, self.vyに基づき移動させる
-        引数 screen：画面Surface
         """
         self.rect.move_ip(self.speed*self.vx, self.speed*self.vy)
-        if check_bound(self.rect) != (True, True):
+
+        # 壁での反射処理
+        yoko, tate = check_bound(self.rect)
+        if not yoko or not tate:
+            self.vx *= -1 if not yoko else 1  # 横方向の速度を反転
+            self.vy *= -1 if not tate else 1  # 縦方向の速度を反転
+            self.bounce_count += 1  # 反射回数を増加
+            self.change_size()  # 大きさをランダムに変更
+
+        # 反射回数が1000回を超えたら爆弾を削除
+        if self.bounce_count > 1000:
             self.kill()
+
+    def change_size(self):
+        """
+        壁に当たるたびにランダムな大きさに変更
+        """
+        rad = random.randint(5, 50)  # 新しい半径をランダムに決定
+        color = random.choice(Bomb.colors)
+        self.image = pg.Surface((2 * rad, 2 * rad))
+        pg.draw.circle(self.image, color, (rad, rad), rad)
+        self.image.set_colorkey((0, 0, 0))
+        self.rect = self.image.get_rect(center=self.rect.center)  # 中心位置を維持して更新
 
 
 class Beam(pg.sprite.Sprite):
@@ -187,10 +208,6 @@ class Beam(pg.sprite.Sprite):
     ビームに関するクラス
     """
     def __init__(self, bird: Bird, angle0=0):
-        """
-        ビーム画像Surfaceを生成する
-        引数 bird：ビームを放つこうかとん
-        """
         super().__init__()
         self.vx, self.vy = bird.dire
         angle = math.degrees(math.atan2(-self.vy, self.vx)) + angle0
@@ -203,10 +220,6 @@ class Beam(pg.sprite.Sprite):
         self.speed = 10
 
     def update(self):
-        """
-        ビームを速度ベクトルself.vx, self.vyに基づき移動させる
-        引数 screen：画面Surface
-        """
         self.rect.move_ip(self.speed*self.vx, self.speed*self.vy)
         if check_bound(self.rect) != (True, True):
             self.kill()
@@ -221,15 +234,7 @@ class NeoBeam(pg.sprite.Sprite):
         self.num = num
 
     def gen_beams(self) :
-        """
-        指定されたビーム数のインスタンスを生成し、リストで返す
-        戻り値: Beamオブジェクトのリスト
-        """
         beams = []
-        # arange = (-50, 51)
-        # step = (arange[1] - arange[0]) // self.num
-        # beams = range(-50, +50, step)
-
         angle_range = (-50, 51)
         angle_step = (angle_range[1] - angle_range[0]) // self.num  
         for i in range(self.num):
@@ -243,11 +248,6 @@ class Explosion(pg.sprite.Sprite):
     爆発に関するクラス
     """
     def __init__(self, obj: "Bomb|Enemy", life: int):
-        """
-        爆弾が爆発するエフェクトを生成する
-        引数1 obj：爆発するBombまたは敵機インスタンス
-        引数2 life：爆発時間
-        """
         super().__init__()
         img = pg.image.load(f"fig/explosion.gif")
         self.imgs = [img, pg.transform.flip(img, 1, 1)]
@@ -256,10 +256,6 @@ class Explosion(pg.sprite.Sprite):
         self.life = life
 
     def update(self):
-        """
-        爆発時間を1減算した爆発経過時間_lifeに応じて爆発画像を切り替えることで
-        爆発エフェクトを表現する
-        """
         self.life -= 1
         self.image = self.imgs[self.life//10%2]
         if self.life < 0:
@@ -286,11 +282,6 @@ class Enemy(pg.sprite.Sprite):
         self.h_name = "BOSS"         #相手の名前表記
 
     def update(self):
-        """
-        敵機を速度ベクトルself.vyに基づき移動（降下）させる
-        ランダムに決めた停止位置_boundまで降下したら，_stateを停止状態に変更する
-        引数 screen：画面Surface
-        """
         if self.state == "down":
             if self.rect.centery >= self.bound:
                 self.vy = random.choice([-3,3])
@@ -299,7 +290,6 @@ class Enemy(pg.sprite.Sprite):
                 self.rect.move_ip(self.vx, self.vy)
         elif self.state == "move":
             self.rect.move_ip(self.vx,self.vy)
-
             if self.rect.left <= 0 or self.rect.right >= WIDTH:
                 self.vx *= -1
             if self.rect.top <= 0 or self.rect.bottom >= HEIGHT:
@@ -406,11 +396,6 @@ class Shield(pg.sprite.Sprite):
     シールドに関するクラス
     """
     def __init__(self, bird: Bird, life: int):
-        """
-        シールドを生成する
-        引数1 bird：こうかとんオブジェクト
-        引数2 life：経過時間
-        """
         super().__init__()
         k_rect = bird.rect
         self.image = pg.Surface((20, k_rect.height*2))
@@ -419,17 +404,14 @@ class Shield(pg.sprite.Sprite):
         pg.draw.rect(self.image, color, (0, 0, 20, k_rect.height*2))
         vx, vy = bird.dire
         angle = math.degrees(math.atan2(-vy, vx))
-        
-        # シールドの描画
         self.image = pg.transform.rotozoom(self.image, angle, 1.0)
         self.image.set_colorkey((0, 0, 0))
         self.rect = self.image.get_rect()
 
-        # シールドの位置調整
-        if vx == 0 and vy != 0:  # 上下方向
+        if vx == 0 and vy != 0:
             self.rect.centerx = bird.rect.centerx
             self.rect.centery = bird.rect.centery + vy * (k_rect.height + 10)
-        elif vx != 0 and vy == 0:  # 左右方向
+        elif vx != 0 and vy == 0:
             self.rect.centerx = bird.rect.centerx + vx * (k_rect.width + 10)
             self.rect.centery = bird.rect.centery
         else:
@@ -439,9 +421,6 @@ class Shield(pg.sprite.Sprite):
         self.life = life
 
     def update(self):
-        """
-        経過時間によってシールドを削除する
-        """
         self.life -= 1
         if self.life < 0:
             self.kill()
@@ -510,9 +489,11 @@ def main():
         if tmr == 400:  # 200フレームに1回，敵機を出現させる
             emys.add(Enemy())
 
+        if tmr == 400:  # 200フレームに1回，敵機を出現させる
+            emys.add(Enemy())
+
         for emy in emys:
             if tmr%emy.interval == 0:
-                # 敵機が停止状態に入ったら，intervalに応じて爆弾投下
                 bombs.add(Bomb(emy, bird))
 
 
@@ -533,7 +514,7 @@ def main():
             exps.add(Explosion(bomb, 50))  # 爆発エフェクト
                     
         for bomb in pg.sprite.groupcollide(bombs, shields, True, False).keys():
-                exps.add(Explosion(bomb, 50)) # 爆発エフェクト
+                exps.add(Explosion(bomb, 50))
 
         for emy in pg.sprite.groupcollide(emys, gravity, gravity_f_or_t, False):
             enemy_hp.value -=1   #攻撃を自キャラが相手に行ったらHPを1減らす
@@ -550,7 +531,6 @@ def main():
         for bomb in pg.sprite.groupcollide(bombs, gravity, True, False):
             exps.add(Explosion(bomb, 50))
 
-        # こうかとんと爆弾の衝突判定
         if len(pg.sprite.spritecollide(bird, bombs, True)) != 0:
             if bird.state != "hyper":  # 無敵状態でない場合
                 bird_hp.value -=100 #相手から攻撃を受けたら自キャラのHPを100減らす
@@ -573,7 +553,6 @@ def main():
         exps.draw(screen)
         enemy_hp.update(screen)
         bird_hp.update(screen)
-        #score.update(screen)
         shields.draw(screen)
         shields.update()
         mp.update(tmr,screen)
