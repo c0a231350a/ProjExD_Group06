@@ -153,7 +153,7 @@ class Bomb(pg.sprite.Sprite):
     """
     colors = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 0), (255, 0, 255), (0, 255, 255), (255, 255, 255), (0, 0, 0)]
 
-    def __init__(self, emy: "Enemy", bird: Bird):
+    def __init__(self, emy: "Enemy", bird: Bird, vx, vy):
         """
         爆弾円Surfaceを生成する
         引数1 emy：爆弾を投下する敵機
@@ -162,12 +162,12 @@ class Bomb(pg.sprite.Sprite):
         super().__init__()
         rad = random.randint(30, 50)  # 爆弾円の半径：10以上50以下の乱数
         self.image = pg.Surface((2*rad, 2*rad))
-        color = random.choice(__class__.colors)  # 爆弾円の色：クラス変数からランダム選択
+        color = (255,0,0)
         pg.draw.circle(self.image, color, (rad, rad), rad)
         self.image.set_colorkey((0, 0, 0))
         self.rect = self.image.get_rect()
         # 爆弾を投下するemyから見た攻撃対象のbirdの方向を計算
-        self.vx, self.vy = calc_orientation(emy.rect, bird.rect)  
+        self.vx, self.vy = vx, vy  
         self.rect.centerx = emy.rect.centerx
         self.rect.centery = emy.rect.centery+emy.rect.height//2
         self.speed = 10  #球速10
@@ -201,7 +201,6 @@ class Bomb(pg.sprite.Sprite):
         pg.draw.circle(self.image, color, (rad, rad), rad)
         self.image.set_colorkey((0, 0, 0))
         self.rect = self.image.get_rect(center=self.rect.center)  # 中心位置を維持して更新
-
 
 class Beam(pg.sprite.Sprite):
     """
@@ -495,7 +494,15 @@ def main():
 
             for emy in emys:
                 if tmr%emy.interval == 0:
-                    bombs.add(Bomb(emy, bird))
+                    num = 3
+                    angles = [i - num//2 for i in range(num)]
+                    angle_step = 90/num
+                    vx, vy = calc_orientation(emy.rect, bird.rect)
+                    angle = math.degrees(math.atan2(-vy, vx))
+                    for i in range(num):
+                        vx = math.cos(math.radians(angle + angles[i] * angle_step))
+                        vy = -math.sin(math.radians(angle + angles[i] * angle_step))
+                        bombs.add(Bomb(emy, bird, vx, vy))
 
 
             for emy in pg.sprite.groupcollide(emys, beams, beam_f_or_t, True).keys():
