@@ -341,7 +341,7 @@ class MP:
         
     def update(self,tmr,screen: pg.Surface):
         #mpの自然回復
-        if self.mp < 300 and tmr%5 == 0: #mpの最大値未満の時、5フレームごとにmpを+1
+        if self.mp < 300 and tmr%5 == 0: #mpの300未満の時、5フレームごとにmpを+1
             self.mp += 1
         
         #MP残量表示
