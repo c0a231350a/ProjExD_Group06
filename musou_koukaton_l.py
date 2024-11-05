@@ -468,12 +468,12 @@ def main():
         for emy in emys:
             if tmr%emy.interval == 0:
                 # 敵機が停止状態に入ったら，intervalに応じて爆弾投下
-                num = 5
+                num = 3
                 angles = [i - num//2 for i in range(num)]
                 angle_step = 90/num
                 vx, vy = calc_orientation(emy.rect, bird.rect)
                 angle = math.degrees(math.atan2(-vy, vx))
-                for i in range(5):
+                for i in range(num):
                     vx = math.cos(math.radians(angle + angles[i] * angle_step))
                     vy = -math.sin(math.radians(angle + angles[i] * angle_step))
                     bombs.add(NeoBomb(emy, bird, vx, vy))
