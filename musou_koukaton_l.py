@@ -197,9 +197,7 @@ class NeoBomb(pg.sprite.Sprite):
         self.image.set_colorkey((0, 0, 0))
         self.vx = vx
         self.vy = vy
-        self.rect = self.image.get_rect()
-        # 爆弾を投下するemyから見た攻撃対象のbirdの方向を計算
-        self.vx, self.vy = calc_orientation(emy.rect, bird.rect)  
+        self.rect = self.image.get_rect() 
         self.rect.centerx = emy.rect.centerx
         self.rect.centery = emy.rect.centery+emy.rect.height//2
         self.speed = 6
