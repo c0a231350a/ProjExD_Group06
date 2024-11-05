@@ -430,12 +430,12 @@ def main():
     pg.display.set_caption("真！こうかとん無双")
     screen = pg.display.set_mode((WIDTH, HEIGHT))
     bg_img = pg.image.load(f"fig/pg_bg.jpg")
-
-
     beam_f_or_t=False     #beamで攻撃した時のtrue_false判定
     gravity_f_or_t=False  #gravityで攻撃した時のtrue_false判定
 
     mp = MP()
+    #score = Score()
+    state = "inactive"
 
     bird = Bird(3, (900, 400))
     bombs = pg.sprite.Group()
@@ -455,111 +455,123 @@ def main():
     tmr = 0
     clock = pg.time.Clock()
     while True:
-        key_lst = pg.key.get_pressed()
-        for event in pg.event.get():
-            if event.type == pg.QUIT:
-                return 0 
-            
-            if event.type == pg.KEYDOWN and key_lst[pg.K_LSHIFT] and event.key == pg.K_SPACE and mp.mp > 30:
-                mp.mp -= 30   
-                neo_beam = NeoBeam(bird,5) 
-                beams.add(*neo_beam.gen_beams())
-            elif event.type == pg.KEYDOWN and event.key == pg.K_SPACE and mp.mp > 5:
-                mp.mp -= 5
-                beams.add(Beam(bird))
-            if event.type == pg.KEYDOWN and event.key == pg.K_e:
-                EMP(emys,bombs,screen)
+        if state == "active":
+            key_lst = pg.key.get_pressed()
+            for event in pg.event.get():
+                if event.type == pg.QUIT:
+                    return 0 
+                
+                if event.type == pg.KEYDOWN and key_lst[pg.K_LSHIFT] and event.key == pg.K_SPACE and mp.mp > 30:
+                    mp.mp -= 30   
+                    neo_beam = NeoBeam(bird,5) 
+                    beams.add(*neo_beam.gen_beams())
+                elif event.type == pg.KEYDOWN and event.key == pg.K_SPACE and mp.mp > 5:
+                    mp.mp -= 5
+                    beams.add(Beam(bird))
+                if event.type == pg.KEYDOWN and event.key == pg.K_e:
+                    EMP(emys,bombs,screen)
 
-            if event.type  == pg.KEYDOWN and event.key == pg.K_0:
-                #if score.value > 200:
-                if mp.mp > 50:
-                    gravity.add(Gravity(50))
+                if event.type  == pg.KEYDOWN and event.key == pg.K_0:
+                    #if score.value > 200:
+                    if mp.mp > 50:
+                        gravity.add(Gravity(50))
+                        mp.mp -= 50
+                    #    score.value -= 200
+                        
+                if event.type == pg.KEYDOWN and event.key == pg.K_TAB and len(shields) == 0 and mp.mp > 50:#and score.value >= 50:
                     mp.mp -= 50
-                #    score.value -= 200
-                    
-            if event.type == pg.KEYDOWN and event.key == pg.K_TAB and len(shields) == 0 and mp.mp > 50:#and score.value >= 50:
-                mp.mp -= 50
-                #score.value -= 50
-                shields.add(Shield(bird, 400))
-        screen.blit(bg_img, [0, 0])   
+                    #score.value -= 50
+                    shields.add(Shield(bird, 400))
+            screen.blit(bg_img, [0, 0])   
 
-        if tmr == 200:  # 200フレームに1回，敵機を出現させる
-            emys.add(Enemy())
+            if tmr == 200:  # 200フレームに1回，敵機を出現させる
+                emys.add(Enemy())
 
-        if tmr == 400:  # 200フレームに1回，敵機を出現させる
-            emys.add(Enemy())
+            if tmr == 400:  # 200フレームに1回，敵機を出現させる
+                emys.add(Enemy())
 
-        if tmr == 400:  # 200フレームに1回，敵機を出現させる
-            emys.add(Enemy())
+            if tmr == 400:  # 200フレームに1回，敵機を出現させる
+                emys.add(Enemy())
 
-        for emy in emys:
-            if tmr%emy.interval == 0:
-                bombs.add(Bomb(emy, bird))
+            for emy in emys:
+                if tmr%emy.interval == 0:
+                    bombs.add(Bomb(emy, bird))
 
 
-        for emy in pg.sprite.groupcollide(emys, beams, beam_f_or_t, True).keys():
-            enemy_hp.value -=100    #攻撃を自キャラが相手に行ったらHPを100減らす
-            if enemy_hp.value < 0:
-                enemy_hp.value=0
-            if 0 <= enemy_hp.value <=100: #beamで残り攻撃回数1回で相手を倒せるHP残量になったらbeam_f_or_t=Trueにする
-                # beam_f_or_t=True
-                if enemy_hp.value <=0:  #相手のHPがゼロになったら演出を行う
-                    for emy in emys:
-                        emy.kill()
-                        exps.add(Explosion(emy, 100))  # 爆発エフェクト
-                    bird.change_img(6, screen)  # こうかとん喜びエフェクト
+            for emy in pg.sprite.groupcollide(emys, beams, beam_f_or_t, True).keys():
+                enemy_hp.value -=100    #攻撃を自キャラが相手に行ったらHPを100減らす
+                if enemy_hp.value < 0:
+                    enemy_hp.value=0
+                if 0 <= enemy_hp.value <=100: #beamで残り攻撃回数1回で相手を倒せるHP残量になったらbeam_f_or_t=Trueにする
+                    # beam_f_or_t=True
+                    if enemy_hp.value <=0:  #相手のHPがゼロになったら演出を行う
+                        for emy in emys:
+                            emy.kill()
+                            exps.add(Explosion(emy, 100))  # 爆発エフェクト
+                        bird.change_img(6, screen)  # こうかとん喜びエフェクト
 
 
-        for bomb in pg.sprite.groupcollide(bombs, beams, True, True).keys():
-            exps.add(Explosion(bomb, 50))  # 爆発エフェクト
-                    
-        for bomb in pg.sprite.groupcollide(bombs, shields, True, False).keys():
-                exps.add(Explosion(bomb, 50))
+            for bomb in pg.sprite.groupcollide(bombs, beams, True, True).keys():
+                exps.add(Explosion(bomb, 50))  # 爆発エフェクト
+                        
+            for bomb in pg.sprite.groupcollide(bombs, shields, True, False).keys():
+                    exps.add(Explosion(bomb, 50))
 
-        for emy in pg.sprite.groupcollide(emys, gravity, gravity_f_or_t, False):
-            enemy_hp.value -=1   #攻撃を自キャラが相手に行ったらHPを1減らす
-            if enemy_hp.value < 0:
-                enemy_hp.value=0
-            if 0 <= enemy_hp.value <=1: #gravityで残り攻撃回数1回で相手を倒せるHP残量になったらgravity_f_or_t=Trueにする
-                # gravity_f_or_t=True
-                if enemy_hp.value <=0:  #相手のHPがゼロになったら演出を行う
-                    for emy in emys:
-                        emy.kill()
-                        exps.add(Explosion(emy, 100))  # 爆発エフェクト
-                    bird.change_img(6, screen)  # こうかとん喜びエフェクト
+            for emy in pg.sprite.groupcollide(emys, gravity, gravity_f_or_t, False):
+                enemy_hp.value -=1   #攻撃を自キャラが相手に行ったらHPを1減らす
+                if enemy_hp.value < 0:
+                    enemy_hp.value=0
+                if 0 <= enemy_hp.value <=1: #gravityで残り攻撃回数1回で相手を倒せるHP残量になったらgravity_f_or_t=Trueにする
+                    # gravity_f_or_t=True
+                    if enemy_hp.value <=0:  #相手のHPがゼロになったら演出を行う
+                        for emy in emys:
+                            emy.kill()
+                            exps.add(Explosion(emy, 100))  # 爆発エフェクト
+                        bird.change_img(6, screen)  # こうかとん喜びエフェクト
 
-        for bomb in pg.sprite.groupcollide(bombs, gravity, True, False):
-            exps.add(Explosion(bomb, 50))
+                for bomb in pg.sprite.groupcollide(bombs, gravity, True, False):
+                    exps.add(Explosion(bomb, 50))
 
-        if len(pg.sprite.spritecollide(bird, bombs, True)) != 0:
-            if bird.state != "hyper":  # 無敵状態でない場合
-                bird_hp.value -=100 #相手から攻撃を受けたら自キャラのHPを100減らす
-                if bird_hp.value <=0:  #HPが0になったら演出
-                    bird.change_img(8, screen)  # こうかとん悲しみエフェクト
-                    pg.display.update()
-                    time.sleep(2)
-                    return
+            if len(pg.sprite.spritecollide(bird, bombs, True)) != 0:
+                if bird.state != "hyper":  # 無敵状態でない場合
+                    bird_hp.value -=100 #相手から攻撃を受けたら自キャラのHPを100減らす
+                    if bird_hp.value <=0:  #HPが0になったら演出
+                        bird.change_img(8, screen)  # こうかとん悲しみエフェクト
+                        pg.display.update()
+                        time.sleep(2)
+                        return
+            gravity.update()
+            gravity.draw(screen)
+            bird.update(key_lst, screen)
+            beams.update()
+            beams.draw(screen)
+            emys.update()
+            emys.draw(screen)
+            bombs.update()
+            bombs.draw(screen)
+            exps.update()
+            exps.draw(screen)
+            enemy_hp.update(screen)
+            bird_hp.update(screen)
+            shields.draw(screen)
+            shields.update()
+            mp.update(tmr,screen)
+            pg.display.update()
 
-        gravity.update()
-        gravity.draw(screen)
-        bird.update(key_lst, screen)
-        beams.update()
-        beams.draw(screen)
-        emys.update()
-        emys.draw(screen)
-        bombs.update()
-        bombs.draw(screen)
-        exps.update()
-        exps.draw(screen)
-        enemy_hp.update(screen)
-        bird_hp.update(screen)
-        shields.draw(screen)
-        shields.update()
-        mp.update(tmr,screen)
-        pg.display.update()
-
-        tmr += 1
-        clock.tick(50)
+            tmr += 1
+            clock.tick(50)
+        elif state == "inactive":
+            fonto = pg.font.SysFont("hgp創英角ﾎﾟｯﾌﾟ体", 50)
+            txt = fonto.render("ゲームを始めるにはSを押してね", True, (255, 0, 0))
+            txt_rct = txt.get_rect()
+            screen.blit(bg_img, [0, 0])
+            screen.blit(txt, [(WIDTH-txt_rct.width)/2, (HEIGHT-txt_rct.height)/2])
+            for event in pg.event.get():
+                if event.type == pg.QUIT:
+                    return 0
+                if event.type == pg.KEYDOWN and event.key == pg.K_s:
+                    state = "active"
+            pg.display.update()
 
 if __name__ == "__main__":
     pg.init()
