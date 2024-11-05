@@ -129,7 +129,7 @@ class Bird(pg.sprite.Sprite):
             self.image = self.imgs[self.dire]
 
         # 無敵状態の発動チェック
-        if key_lst[pg.K_RSHIFT]  and self.state == "normal":  # 発動条件：スコアが100より大 and score.value >= 100
+        if key_lst[pg.K_RSHIFT]  and self.state == "normal" and MP.mp > 200:  # 発動条件：mpが200より大 and score.value >= 100
             self.state = "hyper"
             self.hyper_life = 500  # 発動時間：500フレーム
             # score.value -= 100  # 消費スコア：100
@@ -144,6 +144,7 @@ class Bird(pg.sprite.Sprite):
                 self.image = self.imgs[self.dire]  # 画像を元に戻す
 
         screen.blit(self.image, self.rect)
+        
 
 
 class Bomb(pg.sprite.Sprite):
@@ -342,6 +343,45 @@ class HP(pg.sprite.Sprite):
 #         self.image = self.font.render(f"Score: {self.value}", 0, self.color)
 #         screen.blit(self.image, self.rect)
 
+class MP:
+    """
+    mpの初期値を設定する
+    mpを5フレームごとに回復させる
+    """
+    def __init__(self):
+        self.mp = 300 #mpの初期値
+        self.font = pg.font.Font(None,25)
+        self.color = (0, 0, 255)
+        self.image = self.font.render(f"MP: {self.mp}", 0, self.color)
+        self.rect = self.image.get_rect()
+        self.rect.center = 0,0
+        
+    def update(self,tmr,screen: pg.Surface):
+        #mpの自然回復
+        if self.mp < 300 and tmr%5 == 0: #mpの300未満の時、5フレームごとにmpを+1
+            self.mp += 1
+        
+        #MP残量表示
+        self.image = pg.Surface((300,10))
+        self.rect = self.image.get_rect()
+        self.rect.center = 250,575
+        self.image = self.font.render(f"MP: {self.mp}", 0, self.color)
+        screen.blit(self.image, self.rect)
+        
+        #空のMP容量
+        self.image = pg.Surface((300,10))
+        self.rect = self.image.get_rect()
+        self.rect.center = 250, 560
+        pg.draw.rect(self.image, (0,0,0), (200, 200, 300, 10))
+        screen.blit(self.image, self.rect)
+
+        #MP残量
+        self.image = pg.Surface((self.mp,10))
+        self.rect = self.image.get_rect()
+        self.rect.center = self.mp/2+100, 560
+        pg.draw.rect(self.image, (0,0,255), (0, 0, self.mp, 10))
+        screen.blit(self.image, self.rect)
+
 
 class EMP:
     def __init__(self,emys: pg.sprite.Group,Bombs: pg.sprite.Group,screen : pg.surface):
@@ -416,6 +456,7 @@ def main():
     beam_f_or_t=False     #beamで攻撃した時のtrue_false判定
     gravity_f_or_t=False  #gravityで攻撃した時のtrue_false判定
 
+    mp = MP()
 
     bird = Bird(3, (900, 400))
     bombs = pg.sprite.Group()
@@ -431,6 +472,7 @@ def main():
     bird_hp = HP(bird.hp,bird.h_name,bird.h_rect)
 
 
+    
     tmr = 0
     clock = pg.time.Clock()
     while True:
@@ -439,19 +481,26 @@ def main():
             if event.type == pg.QUIT:
                 return 0 
             
-            if event.type == pg.KEYDOWN and key_lst[pg.K_LSHIFT] and event.key == pg.K_SPACE:   
+            if event.type == pg.KEYDOWN and key_lst[pg.K_LSHIFT] and event.key == pg.K_SPACE and mp.mp > 30:
+                mp.mp -= 30   
                 neo_beam = NeoBeam(bird,5) 
                 beams.add(*neo_beam.gen_beams())
-            elif event.type == pg.KEYDOWN and event.key == pg.K_SPACE:
+            elif event.type == pg.KEYDOWN and event.key == pg.K_SPACE and mp.mp > 5:
+                mp.mp -= 5
                 beams.add(Beam(bird))
             if event.type == pg.KEYDOWN and event.key == pg.K_e:
                 EMP(emys,bombs,screen)
 
             if event.type  == pg.KEYDOWN and event.key == pg.K_0:
-                gravity.add(Gravity(50))
+                #if score.value > 200:
+                if mp.mp > 50:
+                    gravity.add(Gravity(50))
+                    mp.mp -= 50
+                #    score.value -= 200
                     
-            if event.type == pg.KEYDOWN and event.key == pg.K_TAB and len(shields) == 0 :
-
+            if event.type == pg.KEYDOWN and event.key == pg.K_TAB and len(shields) == 0 and mp.mp > 50:#and score.value >= 50:
+                mp.mp -= 50
+                #score.value -= 50
                 shields.add(Shield(bird, 400))
         screen.blit(bg_img, [0, 0])   
 
@@ -527,10 +576,11 @@ def main():
         #score.update(screen)
         shields.draw(screen)
         shields.update()
+        mp.update(tmr,screen)
         pg.display.update()
+
         tmr += 1
         clock.tick(50)
-
 
 if __name__ == "__main__":
     pg.init()
