@@ -456,11 +456,9 @@ def main():
                     if mp.mp > 50:
                         gravity.add(Gravity(50))
                         mp.mp -= 50
-                    #    score.value -= 200
                         
-                if event.type == pg.KEYDOWN and event.key == pg.K_TAB and  mp.mp > 50:
-                    mp.mp -= 50
-                    #score.value -= 50
+                if event.type == pg.KEYDOWN and event.key == pg.K_TAB and  mp.mp > 75:
+                    mp.mp -= 75
                     shields.add(Shield(bird, 400))
             screen.blit(bg_img, [0, 0])   
 
@@ -487,10 +485,10 @@ def main():
 
 
             for emy in pg.sprite.groupcollide(emys, beams, beam_f_or_t, True).keys():
-                enemy_hp.value -=100    #攻撃を自キャラが相手に行ったらHPを100減らす
+                enemy_hp.value -=50    #攻撃を自キャラが相手に行ったらHPを50減らす
                 if enemy_hp.value < 0:
                     enemy_hp.value=0
-                if 0 <= enemy_hp.value <=100: #beamで残り攻撃回数1回で相手を倒せるHP残量になったらbeam_f_or_t=Trueにする
+                if 0 <= enemy_hp.value <=50: #beamで残り攻撃回数1回で相手を倒せるHP残量になったらbeam_f_or_t=Trueにする
                     # beam_f_or_t=True
                     if enemy_hp.value <=0:  #相手のHPがゼロになったら演出を行う
                         for emy in emys:
