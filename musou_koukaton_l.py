@@ -448,8 +448,8 @@ def main():
                 elif event.type == pg.KEYDOWN and event.key == pg.K_SPACE and mp.mp > 5:
                     mp.mp -= 5
                     beams.add(Beam(bird))
-                if event.type == pg.KEYDOWN and event.key == pg.K_e:
-                    EMP(emys,bombs,screen)
+                # if event.type == pg.KEYDOWN and event.key == pg.K_e:
+                    # EMP(emys,bombs,screen)
 
                 if event.type  == pg.KEYDOWN and event.key == pg.K_0:
                     #if score.value > 200:
