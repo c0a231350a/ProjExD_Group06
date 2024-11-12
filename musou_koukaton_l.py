@@ -276,7 +276,7 @@ class Enemy(pg.sprite.Sprite):
         self.bound = WIDTH/2  # 停止位置
         self.state = "down"  # 降下状態or停止状態
         self.interval = random.randint(50, 300)  # 爆弾投下インターバル
-        self.hp = 5000               #相手の総HP
+        self.hp = 2500               #相手の総HP
         self.h_rect = 200, 50        #相手のHP表記の座標
         self.h_name = "BOSS"         #相手の名前表記
 
@@ -448,19 +448,17 @@ def main():
                 elif event.type == pg.KEYDOWN and event.key == pg.K_SPACE and mp.mp > 5:
                     mp.mp -= 5
                     beams.add(Beam(bird))
-                if event.type == pg.KEYDOWN and event.key == pg.K_e:
-                    EMP(emys,bombs,screen)
+                # if event.type == pg.KEYDOWN and event.key == pg.K_e:
+                    # EMP(emys,bombs,screen)
 
                 if event.type  == pg.KEYDOWN and event.key == pg.K_0:
                     #if score.value > 200:
                     if mp.mp > 50:
                         gravity.add(Gravity(50))
                         mp.mp -= 50
-                    #    score.value -= 200
                         
-                if event.type == pg.KEYDOWN and event.key == pg.K_TAB and len(shields) == 0 and mp.mp > 50:#and score.value >= 50:
-                    mp.mp -= 50
-                    #score.value -= 50
+                if event.type == pg.KEYDOWN and event.key == pg.K_TAB and  mp.mp > 75:
+                    mp.mp -= 75
                     shields.add(Shield(bird, 400))
             screen.blit(bg_img, [0, 0])   
 
@@ -487,10 +485,10 @@ def main():
 
 
             for emy in pg.sprite.groupcollide(emys, beams, beam_f_or_t, True).keys():
-                enemy_hp.value -=100    #攻撃を自キャラが相手に行ったらHPを100減らす
+                enemy_hp.value -=50    #攻撃を自キャラが相手に行ったらHPを50減らす
                 if enemy_hp.value < 0:
                     enemy_hp.value=0
-                if 0 <= enemy_hp.value <=100: #beamで残り攻撃回数1回で相手を倒せるHP残量になったらbeam_f_or_t=Trueにする
+                if 0 <= enemy_hp.value <=50: #beamで残り攻撃回数1回で相手を倒せるHP残量になったらbeam_f_or_t=Trueにする
                     # beam_f_or_t=True
                     if enemy_hp.value <=0:  #相手のHPがゼロになったら演出を行う
                         for emy in emys:
