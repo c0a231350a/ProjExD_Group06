@@ -458,7 +458,7 @@ def main():
                         mp.mp -= 50
                     #    score.value -= 200
                         
-                if event.type == pg.KEYDOWN and event.key == pg.K_TAB and len(shields) == 0 and mp.mp > 50:#and score.value >= 50:
+                if event.type == pg.KEYDOWN and event.key == pg.K_TAB and  mp.mp > 50:#and score.value >= 50:
                     mp.mp -= 50
                     #score.value -= 50
                     shields.add(Shield(bird, 400))
