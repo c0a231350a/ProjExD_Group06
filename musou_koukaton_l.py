@@ -276,7 +276,7 @@ class Enemy(pg.sprite.Sprite):
         self.bound = WIDTH/2  # 停止位置
         self.state = "down"  # 降下状態or停止状態
         self.interval = random.randint(50, 300)  # 爆弾投下インターバル
-        self.hp = 5000               #相手の総HP
+        self.hp = 2500               #相手の総HP
         self.h_rect = 200, 50        #相手のHP表記の座標
         self.h_name = "BOSS"         #相手の名前表記
 
@@ -458,7 +458,7 @@ def main():
                         mp.mp -= 50
                     #    score.value -= 200
                         
-                if event.type == pg.KEYDOWN and event.key == pg.K_TAB and  mp.mp > 50:#and score.value >= 50:
+                if event.type == pg.KEYDOWN and event.key == pg.K_TAB and  mp.mp > 50:
                     mp.mp -= 50
                     #score.value -= 50
                     shields.add(Shield(bird, 400))
